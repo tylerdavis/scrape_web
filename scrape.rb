@@ -2,43 +2,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'sqlite3'
 require 'pry'
- 
-# DB Init
-db = SQLite3::Database.new 'scrape.db'
 
-students_table = db.execute_batch <<-SQL
-  create table students(
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    tagline TEXT,
-    short TEXT,
-    aspirations TEXT,
-    interests TEXT
-  );
-  create table social (
-    id INTEGER PRIMARY KEY,
-    student_id INTEGER,
-    name TEXT,
-    href TEXT
-  );
-  create table work (
-    id INTEGER PRIMARY KEY,
-    student_id INTEGER,
-    link TEXT
-  );
-  create table education (
-    id INTEGER PRIMARY KEY,
-    student_id INTEGER,
-    name TEXT,
-    href TEXT
-  );
-  create table cred (
-    id INTEGER PRIMARY KEY,
-    student_id INTEGER,
-    href TEXT
-  );
-SQL
- 
 class Student
  
   ATTRIBUTES = {
@@ -79,15 +43,6 @@ class Student
   def self.columns_for_sql
     self.attributes_hash.collect { |k, v| "#{k.to_s.downcase} #{v.to_s.upcase}" }.join(",")
   end
- 
-  # def self.create_table
-  #   @@db.execute "CREATE TABLE #{@tableName} (#{self.columns_for_sql});"
-  # end
- 
-
-
-  # self.create_table
-  rows = @@db.execute( "select * from students" )
  
   def initialize(options={})
     if options.class == Hash
@@ -132,15 +87,36 @@ class Student
 
   end
 
+  def self.query_count_id_by_name(name)
+    query = @@db.execute("SELECT COUNT(*) FROM ? WHERE name = ?", [@tableName, name])
+  end
+
+  def self.query_id_by_name(name)
+    query = @@db.execute("SELECT id FROM ? WHERE name = ?", [@tableName, name])
+    if query[0].length > 0
+      return query[0][0]
+    end
+  end
+
+  def sql_question_marks
+    marks = []
+    self.attributes.length.times do
+      marks << '?'
+    end
+    marks.join(',')
+  end
+
+  def save
+    if self.query_count_id_by_name(@name) > 0
+      @db.execute(" UPDATE #{@tableName} (#{self.attributes}) VALUES (#{self.sql_question_marks})",
+                        [@name, @tagline, @short, @aspirations, @interests, self.query_id_by_name(@name)])
+    else # If there's no id, then create a new record
+      @db.execute("INSERT INTO students (name, tagline, short, aspirations, interests)
+                              VALUES (?, ?, ?, ?, ?);", self.attributes)
+      @id = self.query_count_id_by_name(@name) # Once created, set the local id to the db's id
+    end
+  end
 end
 
 binding.pry
- 
-url = 'http://students.flatironschool.com/'
- 
-doc = Nokogiri::HTML(open("#{url}"))
- 
-front_page = doc.css('.name-position').collect { |s| s.parent['href'] }
- 
-hella_students = []
  
