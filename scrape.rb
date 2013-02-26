@@ -1,122 +1,86 @@
 require 'open-uri'
 require 'nokogiri'
-require 'sqlite3'
-require 'pry'
-
+require 'data_mapper'
+require 'dm-postgres-adapter'
+ 
+ENV['DATABASE_URL'] ||= 'postgres://tylerdavis:@localhost/students'
+ 
+DataMapper.setup(:default, ENV['DATABASE_URL'])
+ 
+DataMapper.auto_migrate!
+ 
 class Student
+  include DataMapper::Resource
  
-  ATTRIBUTES = {
-    :id => :integer,
-    :name => :text,
-    :tagline => :text,
-    :short => :text,
-    :aspirations => :text,
-    :interests => :text
-  }
+  property :id, Serial
+  property :image, String
+  property :name, String
+  property :tagline, String
+  property :short, Text
+  property :aspirations, Text
+  property :interests, Text
  
-  @hella_students = []
-
-  def self.all
-    @hella_students
-  end
-
-  @@db = SQLite3::Database.new('scrape.db')
+  @@url = 'http://students.flatironschool.com/'
+  @@root_doc = Nokogiri::HTML(open(@@url))
  
-  ATTRIBUTES.each do |attribute, type|
-    attr_accessor attribute
+  def self.pull_student_links
+    @@links = @@root_doc.css('.columns').css('a').collect { |s| s['href'] }
   end
  
-  def self.attributes
-    ATTRIBUTES.keys
+  def self.pull_all_student_profiles
+    self.pull_student_links
+    @@links.each { |link| self.new_from_url(@@url + link) }
   end
  
-  def self.attributes_hash
-    ATTRIBUTES
-  end
- 
-  def self.table_name
-    "students"
-  end
- 
-  @tableName = self.table_name
- 
-  def self.columns_for_sql
-    self.attributes_hash.collect { |k, v| "#{k.to_s.downcase} #{v.to_s.upcase}" }.join(",")
-  end
- 
-  def initialize(options={})
-    if options.class == Hash
-      options.each { |key, value| instance_variable_set("@#{key}", value) }
-    elsif options.class == String
-      create_from_url(options)
-    end
-  end
-
-  def get_page(link)
+  def self.get_page(link)
     begin
       html = open(link) 
       Nokogiri::HTML(html)
     rescue => e
-      puts "Failed open #{link} because of #{e}"
+      puts "Failed to open #{link} because of #{e}"
     end
   end
-
-  def create_from_url(url)
-    @doc = get_page(url)
-    get_content()
-    self.class.all << self
+ 
+  def self.new_from_url(url)
+    doc = self.get_page(url)
+    self.create(self.get_content(doc))
   end
-
-  def get_content()
+ 
+  def self.get_content(doc)
     content_paths = {
       :name => '#about h1',
+      :image => '#about img',
       :tagline => '#about h2',
-      :short => '#about p:nth-child(0)',
-      :aspirations => '#about p:nth-child(1)',
-      :interests => '#about p:nth-child(2)'
-    }   
-
-    content_paths.each do |key, value| 
+      :short => '#about h2 + p',
+      :aspirations => '#about h3 + p',
+      :interests => '#about h3 + p + h3 + p'
+    }
+    result = {} 
+    content_paths.each do |key, value|
       begin
-        # puts key + " " + value
-       self.send("#{key}=",@doc.css(value).text) 
+        # ("#{key}=",doc.css(value).text)
+        if key == :image 
+          result[key] = doc.css(value)[0]['src']
+        else
+          result[key] = doc.css(value).text
+        end
+
       rescue Exception => e
        puts "Scrape error for content key: #{key} error: #{e}"
-      end        
+      end
     end
-
+    result
   end
-
-  def self.query_count_id_by_name(name)
-    query = @@db.execute("SELECT COUNT(*) FROM ? WHERE name = ?", [@tableName, name])
-  end
-
-  def self.query_id_by_name(name)
-    query = @@db.execute("SELECT id FROM ? WHERE name = ?", [@tableName, name])
-    if query[0].length > 0
-      return query[0][0]
-    end
-  end
-
-  def sql_question_marks
-    marks = []
-    self.attributes.length.times do
-      marks << '?'
-    end
-    marks.join(',')
-  end
-
-  def save
-    if self.query_count_id_by_name(@name) > 0
-      @db.execute(" UPDATE #{@tableName} (#{self.attributes}) VALUES (#{self.sql_question_marks})",
-                        [@name, @tagline, @short, @aspirations, @interests, self.query_id_by_name(@name)])
-    else # If there's no id, then create a new record
-      @db.execute("INSERT INTO students (name, tagline, short, aspirations, interests)
-                              VALUES (?, ?, ?, ?, ?);", self.attributes)
-      @id = self.query_count_id_by_name(@name) # Once created, set the local id to the db's id
-    end
-  end
-end
-
-binding.pry
  
+  def self.find_by_name(name)
+    self.first(:name=>name)
+  end
+ 
+  def self.find(id)
+    self.get(id)
+  end
+ 
+end
+ 
+DataMapper.finalize
+DataMapper.auto_upgrade!
