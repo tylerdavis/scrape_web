@@ -1,8 +1,6 @@
 require 'sinatra'
 require 'json'
-require 'pry'
 require './student'
-require './scrape'
 
 get '/' do
   @students = Student.all
