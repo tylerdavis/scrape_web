@@ -97,7 +97,5 @@ class Student
 
 end
 
-binding.pry
-
 DataMapper.finalize
 DataMapper.auto_upgrade!
