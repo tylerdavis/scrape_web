@@ -1,5 +1,7 @@
 require 'sinatra'
 require 'json'
+require 'pry'
+require './student'
 require './scrape'
 
 get '/' do
@@ -7,8 +9,8 @@ get '/' do
   erb :list_view
 end
 
-get '/student/:id' do
-  @student = Student.get(params['id'])
+get '/:slug' do
+  @student = Student.first(:slug => params[:slug])
   erb :detail_view
 end
 
