@@ -52,7 +52,7 @@
             <h1>Students of Flatiron</h1>
 
             <% for @student in @students %>
-              <a href="student/<%= @student.id %>">
+              <a href="/<%= @student.slug %>">
                 <div class="photo-wrapper">
                   <% unless @student.image == '[Null]' %>
                     <img src="http://students.flatironschool.com/<%= @student.image %>" alt="<%=@student.name%>">

@@ -19,6 +19,21 @@ class Student
   property :short, Text
   property :aspirations, Text
   property :interests, Text
+  property :slug, String
+
+  def self.slugify_students
+    Student.all.each do |student|
+      if student.name
+        student.slugify!
+        puts "Slugified #{student.name} into #{student.slug}"
+      end
+    end
+  end
+
+  def slugify!
+    self.slug = name.downcase.gsub(" ", "-")
+    self.save
+  end
 
   @@url = 'http://students.flatironschool.com/'
   @@root_doc = Nokogiri::HTML(open(@@url))
@@ -81,6 +96,8 @@ class Student
   end
 
 end
+
+binding.pry
 
 DataMapper.finalize
 DataMapper.auto_upgrade!
