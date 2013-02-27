@@ -81,7 +81,7 @@ section #intro{ font-family:"PodkovaRegular", Times, serif; color:#161616; font-
 .recent-blog .meta, .about-us .position{ margin-bottom:1.25em; font-style:italic; color:#7d7d7d;  font-family:"PodkovaRegular", Times, serif }
 .recent-blog .meta span{ color:#a7a7a7;}
 .person{ float:left; margin-right:20px;}
-.name-position{ margin-bottom:1.5em; float:left;}
+.name-position{ margin-bottom:1.5em; /*float:left; */}
 #slider_wrap{max-width:977px; margin:0 auto 0px auto; position:relative; clear:both;  padding-bottom:24px; overflow:hidden; height:477px;}
 #recent-project{margin-bottom:2.5em;}
 .title_header img{ float:left; margin-right:10px;}
@@ -212,6 +212,19 @@ COLUMNS
 .five_sixth{width:82.67%}
 .one_half, .one_third, .two_third, .three_fourth, .one_fourth, .one_fifth, .two_fifth, .three_fifth, .four_fifth, .one_sixth, .five_sixth{position:relative; margin-right:3%; float:left; margin-bottom:2.25em}
 .last{margin-right:0 !important; clear:right;}
+
+.one_third:nth-of-type(3n) {
+  margin-right:0 !important; 
+  clear:right;
+}
+
+.one_third:nth-of-type(3n):after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
 
 /*--------------------------
 GLOBAL
