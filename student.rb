@@ -2,6 +2,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'data_mapper'
 require 'dm-sqlite-adapter'
+require 'pry'
 
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/students.db"
 
@@ -20,6 +21,8 @@ class Student
   property :aspirations, Text
   property :interests, Text
   property :slug, String
+  property :social, Text
+  property :coder_cred, Text
 
   def self.slugify_students
     Student.all.each do |student|
@@ -57,8 +60,12 @@ class Student
   end
 
   def self.new_from_url(url)
-    doc = self.get_page(url)
-    self.create(self.get_content(doc))
+    begin
+      doc = self.get_page(url)
+      self.create(self.get_text_content(doc))
+    rescue => e 
+      puts "new_from_url error because of #{e}"
+    end
   end
 
   def self.get_text_content(doc)
@@ -77,36 +84,50 @@ class Student
 
       rescue Exception => e
        puts "Scrape error for content key: #{key} error: #{e}"
-      end
+      end 
     end
+    result[:image] ||= get_image_content(doc)
+    result[:social] ||= get_social_content(doc)
+    result[:coder_cred] ||= get_coder_cred_content(doc)
     result
   end
 
   def self.get_image_content(doc)
-    self.image = doc.css('#about img')[0]['src']
+    begin
+      image = doc.css("#about img")[0]['src']
+    rescue Exception => e
+      puts "Scrape error for image error: #{e}" 
+    end    
   end
   
   def self.get_social_content(doc)
     social_link_elements = doc.css("div.social_icons i")
     social_links = Hash.new
     social_link_elements.each do|i_element|
-      link_type = i_element['class'].gsub("icon-", "")
-      link_href = i_element.parent['href']
-      social_links[link_type.to_sym] = link_href
+      begin
+        link_type = i_element['class'].gsub("icon-", "")
+        link_href = i_element.parent['href']
+        social_links[link_type.to_sym] = link_href
+      rescue Exception => e
+        puts "Scrape error for social error: #{e}" 
+      end   
+    end    
+    social_links  
   end
   
   def self.get_coder_cred_content(doc)
-    coder_cred = {
-      :github => doc.css('section#coder-cred table a')[0]['href'] 
-      :treehouse => doc.css('section#coder-cred table a')[1]['href']
-      :codeschool => doc.css('section#coder-cred table a')[3]['href']
-      :coderwall => doc.css('section#coder-cred table a')[4]['href']
-    }
     begin
-    blog = doc.css('section#coder-cred div p a')[0]['href']
-    presentation = doc.css("section#coder-cred iframe")[0]["src"]
+    coder_cred = {
+      :github => doc.css('section#coder-cred table a')[0]['href'], 
+      :treehouse => doc.css('section#coder-cred table a')[1]['href'],
+      :codeschool => doc.css('section#coder-cred table a')[3]['href'],
+      :coderwall => doc.css('section#coder-cred table a')[4]['href'],
+      :blog => doc.css('section#coder-cred div p a')[0]['href'],
+      :presentation => doc.css("section#coder-cred iframe")[0]["src"]
+    }
     rescue Exception => e
-      puts "" 
+      puts "Scrape error for coder cred error: #{e}"
+    end  
   end       
 
   def self.find_by_name(name)
@@ -121,3 +142,5 @@ end
 
 DataMapper.finalize
 DataMapper.auto_upgrade!
+
+binding.pry
