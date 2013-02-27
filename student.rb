@@ -3,7 +3,6 @@ require 'nokogiri'
 require 'data_mapper'
 require 'dm-sqlite-adapter'
 
-
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/students.db"
 
 DataMapper.setup(:default, ENV['DATABASE_URL'])
@@ -71,6 +70,7 @@ class Student
   def self.get_text_content(doc)
     content_paths = {
       :name => '#about h1',
+      :image => '#about img',
       :tagline => '#about h2',
       :short => '#about h2 + p',
       :aspirations => '#about h3 + p',
@@ -81,7 +81,6 @@ class Student
       begin
         # ("#{key}=",doc.css(value).text)
         result[key] = doc.css(value).text
-
       rescue Exception => e
        puts "Scrape error for content key: #{key} error: #{e}"
       end 
@@ -142,5 +141,3 @@ end
 
 DataMapper.finalize
 DataMapper.auto_upgrade!
-
-
