@@ -2,7 +2,7 @@ require 'open-uri'
 require 'nokogiri'
 require 'data_mapper'
 require 'dm-sqlite-adapter'
-require 'pry'
+
 
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/students.db"
 
@@ -143,4 +143,4 @@ end
 DataMapper.finalize
 DataMapper.auto_upgrade!
 
-binding.pry
+
