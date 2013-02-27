@@ -2,16 +2,19 @@
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>Flatiron School - Students</title>
-        <meta name="description" content="Flatiron School Student Profiles">
-        <meta name="viewport" content="width=device-width">
-        <link type="text/css" rel="stylesheet" href="/public/style.css">
-    </head>
-    <body>
+<!--[if gt IE 8]><!--> 
+<html class="no-js"> <!--<![endif]-->
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+      <title>Flatiron School - Students</title>
+      <meta name="description" content="Flatiron School Student Profiles">
+      <link type="text/css" rel="stylesheet" href="css/style.css">
+      <script type="text/javascript" async="" src="http://www.google-analytics.com/ga.js"></script>
+      <script type="text/javascript" src="js/libs/jquery-1.4.3.min.js"></script>
+      <script type="text/javascript" src="js/libs/modernizr-1.7.min.js"></script>
+  </head>
+  <body>
 
     <div id="page">
       <header id="header">
@@ -29,16 +32,40 @@
       </header>
     </div>
 
-      <% for @student in @students %>
-        <a href="/<%= @student.slug %>">
-          <div class="photo-wrapper">
-            <% unless @student.image == '[Null]' %>
-              <img src="http://students.flatironschool.com/<%= @student.image %>" alt="<%=@student.name%>">
-            <% end %>
+    <section id="about" class="about-us content">
+      <div class="center">
+        <h1 id="intro" style="padding-top: 20px">
+          Every story has heroes. We're 28 people on a journey to learn to love code.
+        </h1>
+
+        <div class="columns">
+          <% for @student in @students %>
+
+          <div class="one_third">
+            <a href="/<%= @student.slug %>">
+              <% unless @student.image == '[Null]' %>
+                <img class="person" src="http://students.flatironschool.com/<%= @student.image %>" alt="<%=@student.name%>" width="60px">
+              <% end %>
+              <div class="name-position">
+                <h2><%=@student.name%></h2>
+                <div class="position"><%=@student.tagline%></div>
+              </div>
+              <div class="clear"></div>
+            </a>
+            <p class="excerpt"><%=@student.short%></p>
           </div>
-        </a>
-      <% end %>
+          <!-- END one row -->
 
+          <% end %>
 
-    </body>
+          <div class="clear"></div>
+
+        </div>
+        <!-- /END .columns-->
+        <div class="clear"></div>
+      </div>
+      <!-- /END .center-->
+    </section>
+
+  </body>
 </html>
